@@ -3,9 +3,9 @@ import { formatCoordinates } from '../../utils/formatDate';
 
 /**
  * A small "instrument panel" overlay, echoing a cartographer's readout.
- * Shows guidance until a country is active, then swaps to that country's
- * coordinates — reinforcing the map-as-instrument feel without adding
- * another modal or panel.
+ * Shows guidance until a country is clicked/selected, then swaps to that
+ * country's coordinates — reinforcing the map-as-instrument feel without
+ * adding another modal or panel.
  */
 export function MapHud({ activeCountry }) {
   return (
@@ -16,9 +16,8 @@ export function MapHud({ activeCountry }) {
           {activeCountry.name} · {formatCoordinates(activeCountry.lat, activeCountry.lon)}
         </span>
       ) : (
-        <span className="hidden sm:inline">Hover a highlighted country to tune in</span>
+        <span>Click a highlighted country to tune in</span>
       )}
-      {!activeCountry && <span className="sm:hidden">Tap a country to tune in</span>}
     </div>
   );
 }

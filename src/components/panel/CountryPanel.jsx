@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { X, ArrowUpRight } from 'lucide-react';
@@ -6,17 +7,25 @@ import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { ArticleCard } from './ArticleCard';
 import { LoadingState } from '../common/LoadingState';
 import { ErrorState } from '../common/ErrorState';
+import { EmptyState } from '../common/EmptyState';
+import { CategoryFilter } from '../common/CategoryFilter';
 import { formatCoordinates } from '../../utils/formatDate';
 
 /**
- * The panel that appears when a country is hovered/tapped/selected on the
- * map. Desktop: a drawer sliding in from the right (doesn't obscure the
- * map). Mobile: a bottom sheet (touch devices can't "hover", so tapping a
- * country opens this directly).
+ * The panel that appears when a country is clicked/tapped on the map.
+ * Desktop: a drawer sliding in from the right (doesn't obscure the map).
+ * Mobile: a bottom sheet, opened by the same tap gesture.
  */
 export function CountryPanel({ country, onClose }) {
   const isDesktop = useMediaQuery('(min-width: 768px)');
-  const { data, isLoading, isError, error, refetch } = useCountryNews(country?.id);
+  const [category, setCategory] = useState(null);
+  const { data, isLoading, isError, error, refetch } = useCountryNews(country?.id, category);
+
+  // Reset the filter whenever a different country is selected, rather than
+  // carrying "Sports" over from the last country the person looked at.
+  useEffect(() => {
+    setCategory(null);
+  }, [country?.id]);
 
   const variants = isDesktop
     ? {
@@ -84,10 +93,21 @@ export function CountryPanel({ country, onClose }) {
             </header>
 
             <div className="px-5 py-4">
+              <div className="mb-4">
+                <CategoryFilter selected={category} onSelect={setCategory} />
+              </div>
+
               {isLoading && <LoadingState label="Tuning into the wire…" />}
               {isError && <ErrorState message={error.message} onRetry={refetch} />}
 
-              {data && (
+              {data && data.articles.length === 0 && (
+                <EmptyState
+                  title="No stories in this category"
+                  description="Try a different category, or select All to see everything for this country."
+                />
+              )}
+
+              {data && data.articles.length > 0 && (
                 <>
                   <div className="mb-3 flex items-center justify-between">
                     <span className="font-mono text-[11px] uppercase tracking-wide text-mist-500">

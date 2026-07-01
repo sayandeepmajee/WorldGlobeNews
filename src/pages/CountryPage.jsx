@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Header } from '../components/layout/Header';
@@ -5,6 +6,7 @@ import { ArticleCard } from '../components/panel/ArticleCard';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
 import { EmptyState } from '../components/common/EmptyState';
+import { CategoryFilter } from '../components/common/CategoryFilter';
 import { useCountryNews } from '../hooks/useCountryNews';
 import { getCountryByAlpha2 } from '../api/mockData/countries';
 import { formatCoordinates } from '../utils/formatDate';
@@ -12,7 +14,13 @@ import { formatCoordinates } from '../utils/formatDate';
 export function CountryPage() {
   const { alpha2 } = useParams();
   const country = getCountryByAlpha2(alpha2);
-  const { data, isLoading, isError, error, refetch } = useCountryNews(country?.id);
+  const [category, setCategory] = useState(null);
+  const { data, isLoading, isError, error, refetch } = useCountryNews(country?.id, category);
+
+  // Reset the filter when navigating to a different country's page.
+  useEffect(() => {
+    setCategory(null);
+  }, [alpha2]);
 
   return (
     <div className="flex min-h-dvh flex-col bg-ink-900">
@@ -52,10 +60,21 @@ export function CountryPage() {
               </div>
             </div>
 
+            <div className="mb-5">
+              <CategoryFilter selected={category} onSelect={setCategory} />
+            </div>
+
             {isLoading && <LoadingState label="Tuning into the wire…" />}
             {isError && <ErrorState message={error.message} onRetry={refetch} />}
 
-            {data && (
+            {data && data.articles.length === 0 && (
+              <EmptyState
+                title="No stories in this category"
+                description="Try a different category, or select All to see everything for this country."
+              />
+            )}
+
+            {data && data.articles.length > 0 && (
               <div className="grid gap-4 sm:grid-cols-2">
                 {data.articles.map((article) => (
                   <ArticleCard key={article.id} article={article} />
